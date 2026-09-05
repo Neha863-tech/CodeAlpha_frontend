@@ -1,0 +1,466 @@
+/* ==========================================================================
+   DESIGN TOKENS
+   ========================================================================== */
+:root {
+  --color-bg: #08090f;
+  --color-glass: rgba(255, 255, 255, 0.055);
+  --color-glass-strong: rgba(255, 255, 255, 0.09);
+  --color-border: rgba(255, 255, 255, 0.09);
+  --color-text: #f2f3f8;
+  --color-text-muted: #8b8ea3;
+
+  /* One neon duo carries every accent in the app — progress fill, play
+     button, active queue row — so the palette reads as cohesive rather
+     than "a different bright color per feature". */
+  --accent-a: #35e6ff;
+  --accent-b: #ff3dbd;
+  --accent-gradient: linear-gradient(120deg, var(--accent-a), var(--accent-b));
+
+  --font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 160ms;
+  --duration-base: 300ms;
+
+  --radius-lg: 24px;
+  --radius-md: 14px;
+  --header-height: 72px;
+  --queue-width: 340px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: dark; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+button { font: inherit; color: inherit; }
+img { max-width: 100%; display: block; }
+
+:focus-visible {
+  outline: 2px solid var(--accent-a);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Fixed, blurred neon blobs behind everything — the light source that the
+   glass panels above are "translucent" against. Purely decorative, so it's
+   aria-hidden and pointer-events: none. */
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 32% at 12% 15%, rgba(53, 230, 255, 0.16), transparent 70%),
+    radial-gradient(42% 36% at 90% 80%, rgba(255, 61, 189, 0.14), transparent 70%),
+    radial-gradient(60% 50% at 50% 100%, rgba(120, 80, 255, 0.08), transparent 70%);
+}
+
+/* Shared glassmorphic surface treatment for both panels. */
+.glass {
+  background: var(--color-glass);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: 0 20px 60px -24px rgba(0, 0, 0, 0.6);
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+.app-header {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(20px, 4vw, 48px);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.01em; font-size: 1.1rem; }
+.brand__mark { width: 10px; height: 10px; border-radius: 3px; background: var(--accent-gradient); }
+
+.queue-toggle {
+  display: none; /* shown only on narrow viewports, see media query below */
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-glass);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background var(--duration-fast) var(--ease-premium);
+}
+.queue-toggle:hover { background: var(--color-glass-strong); }
+.queue-toggle__count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--accent-gradient);
+  color: #08090f;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   DASHBOARD LAYOUT
+   Two-panel CSS Grid: player + docked queue on desktop. On narrow screens
+   the queue collapses to a single column and is repositioned as a
+   fixed slide-up sheet (see the max-width: 880px block).
+   ========================================================================== */
+.dashboard {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 12px clamp(20px, 4vw, 48px) 48px;
+  display: grid;
+  grid-template-columns: 1fr var(--queue-width);
+  gap: 24px;
+  align-items: start;
+}
+
+/* ==========================================================================
+   PLAYER PANEL
+   ========================================================================== */
+.player-panel {
+  padding: clamp(24px, 4vw, 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.vinyl-stage {
+  position: relative;
+  width: min(240px, 55vw);
+  aspect-ratio: 1 / 1;
+  margin-bottom: 28px;
+}
+
+/* The vinyl disk: real album art on a circular record, with a soft
+   rotating conic sheen layered on top via ::before for a glassy highlight. */
+.vinyl {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.04),
+    0 20px 50px -18px rgba(0, 0, 0, 0.7);
+  animation: spin 14s linear infinite;
+  animation-play-state: paused; /* toggled to "running" only while audio plays */
+}
+
+.vinyl.is-spinning { animation-play-state: running; }
+
+.vinyl__art { width: 100%; height: 100%; object-fit: cover; }
+
+.vinyl__hole {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 16%; height: 16%;
+  transform: translate(-50%, -50%);
+  background: var(--color-bg);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* "Breathing" glow — a slow pulsing halo behind the disk that only runs
+   while playing, giving a subtle sign of life without competing with the
+   spin animation. */
+.vinyl-stage::after {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  opacity: 0;
+  filter: blur(28px);
+  transition: opacity var(--duration-base) var(--ease-premium);
+}
+.vinyl-stage:has(.vinyl.is-spinning)::after {
+  opacity: 0.35;
+  animation: breathe 3.2s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(0.96); }
+  50% { transform: scale(1.05); }
+}
+
+/* Tiny EQ bars — a second, understated "now playing" signal next to the
+   track title. Bars freeze mid-height via animation-play-state, exactly
+   like the vinyl, driven by the same .is-active toggle. */
+.eq {
+  position: absolute;
+  bottom: -10px; right: -6px;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 18px;
+  padding: 4px 6px;
+  background: rgba(8, 9, 15, 0.75);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.eq span {
+  width: 3px;
+  height: 40%;
+  border-radius: 2px;
+  background: var(--accent-gradient);
+  animation-play-state: paused;
+}
+.eq.is-active span { animation: eqBounce 900ms ease-in-out infinite; }
+.eq span:nth-child(1) { animation-duration: 780ms; }
+.eq span:nth-child(2) { animation-duration: 1020ms; animation-delay: 80ms; }
+.eq span:nth-child(3) { animation-duration: 640ms; animation-delay: 160ms; }
+.eq span:nth-child(4) { animation-duration: 900ms; animation-delay: 40ms; }
+@keyframes eqBounce {
+  0%, 100% { height: 25%; }
+  50% { height: 100%; }
+}
+
+.track-meta { margin-bottom: 22px; min-height: 56px; }
+.track-meta__title { margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em; }
+.track-meta__artist { margin: 4px 0 0; color: var(--color-text-muted); font-size: 0.95rem; }
+
+/* ==========================================================================
+   PROGRESS BAR
+   Built on a native <input type="range">, restyled. The filled portion is
+   drawn with a CSS custom property (--fill) that script.js updates on every
+   timeupdate tick — one variable write per frame, no DOM node churn.
+   ========================================================================== */
+.progress {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.progress__time {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  width: 34px;
+  flex-shrink: 0;
+}
+.progress__time:last-child { text-align: right; }
+
+.progress__slider {
+  --fill: 0%;
+  flex: 1;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent-a) 0%, var(--accent-b) var(--fill), rgba(255,255,255,0.12) var(--fill));
+  cursor: pointer;
+}
+.progress__slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
+  transition: transform var(--duration-fast) var(--ease-premium);
+}
+.progress__slider:hover::-webkit-slider-thumb,
+.progress__slider:active::-webkit-slider-thumb { transform: scale(1.2); }
+.progress__slider::-moz-range-thumb {
+  width: 14px; height: 14px; border: none; border-radius: 50%; background: #fff;
+}
+.progress__slider::-moz-range-track { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.12); }
+.progress__slider::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--accent-gradient); }
+
+/* ==========================================================================
+   TRANSPORT CONTROLS
+   ========================================================================== */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.control-btn {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: var(--color-glass-strong);
+  color: var(--color-text);
+  transition: transform var(--duration-fast) var(--ease-premium),
+              background var(--duration-fast) var(--ease-premium),
+              color var(--duration-fast) var(--ease-premium);
+}
+.control-btn:hover { transform: translateY(-2px) scale(1.05); background: rgba(255,255,255,0.15); }
+.control-btn:active { transform: translateY(0) scale(0.94); }
+
+.control-btn--secondary { width: 38px; height: 38px; color: var(--color-text-muted); background: transparent; }
+.control-btn--secondary:hover { color: var(--color-text); background: var(--color-glass); }
+.control-btn--secondary.is-active { color: var(--accent-a); }
+.control-btn--secondary[aria-pressed="true"] { color: var(--accent-a); }
+
+.control-btn--play {
+  width: 64px; height: 64px;
+  background: var(--accent-gradient);
+  color: #08090f;
+  box-shadow: 0 12px 30px -10px rgba(255, 61, 189, 0.5);
+}
+.control-btn--play:hover { transform: translateY(-2px) scale(1.06); }
+
+.control-btn--ghost { width: 34px; height: 34px; background: transparent; color: var(--color-text-muted); }
+.control-btn--ghost:hover { color: var(--color-text); background: var(--color-glass); }
+
+/* ==========================================================================
+   VOLUME
+   ========================================================================== */
+.volume { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 220px; }
+.volume__slider {
+  --fill: 75%;
+  flex: 1;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent-a), var(--accent-b) var(--fill), rgba(255,255,255,0.12) var(--fill));
+  cursor: pointer;
+}
+.volume__slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+}
+.volume__slider::-moz-range-thumb { width: 12px; height: 12px; border: none; border-radius: 50%; background: #fff; }
+.volume__slider::-moz-range-track { height: 4px; border-radius: 999px; background: rgba(255,255,255,0.12); }
+
+/* ==========================================================================
+   QUEUE PANEL
+   Docked by default (desktop). See media query for the mobile slide-up
+   transform.
+   ========================================================================== */
+.queue-panel {
+  padding: 22px;
+  max-height: calc(100vh - var(--header-height) - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.queue-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.queue-panel__header h2 { margin: 0; font-size: 1rem; font-weight: 700; }
+.queue-panel__close {
+  display: none; /* only relevant in the mobile sheet layout */
+  appearance: none; border: none; background: transparent; color: var(--color-text-muted);
+  cursor: pointer; width: 32px; height: 32px; border-radius: 50%;
+}
+.queue-panel__close:hover { background: var(--color-glass); color: var(--color-text); }
+
+.queue-list {
+  list-style: none;
+  margin: 0; padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--duration-fast) var(--ease-premium),
+              border-color var(--duration-fast) var(--ease-premium);
+}
+.queue-item:hover { background: var(--color-glass); }
+
+.queue-item__art { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.queue-item__meta { min-width: 0; flex: 1; }
+.queue-item__title {
+  display: block; font-size: 0.88rem; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.queue-item__artist {
+  display: block; font-size: 0.78rem; color: var(--color-text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.queue-item__duration { font-size: 0.75rem; color: var(--color-text-muted); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+/* Active-track indicator: left accent bar + tinted background + gradient
+   text on the title, all driven by one .is-active class from script.js. */
+.queue-item.is-active {
+  background: var(--color-glass-strong);
+  border-color: rgba(53, 230, 255, 0.25);
+}
+.queue-item.is-active .queue-item__title {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.queue-item.is-active::before {
+  content: '';
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   Below 880px: single column. The queue panel becomes a fixed bottom sheet,
+   hidden off-screen by default and slid into view via .is-open — one
+   transform toggle, no JS-driven animation.
+   ========================================================================== */
+@media (max-width: 880px) {
+  .dashboard { grid-template-columns: 1fr; }
+
+  .queue-toggle { display: inline-flex; }
+
+  .queue-panel {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 50;
+    max-height: 70vh;
+    border-radius: 24px 24px 0 0;
+    transform: translateY(100%);
+    transition: transform var(--duration-base) var(--ease-premium);
+  }
+  .queue-panel.is-open { transform: translateY(0); }
+  .queue-panel__close { display: inline-flex; align-items: center; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .app-header { padding: 0 16px; }
+  .dashboard { padding: 8px 16px 32px; }
+  .controls { gap: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 0.001ms !important; }
+}

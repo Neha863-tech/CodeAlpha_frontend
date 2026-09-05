@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nocturne — Music Player</title>
+  <meta name="description" content="A glassmorphic, keyboard-and-screen-reader-friendly music player built with vanilla HTML, CSS, and JavaScript." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <div class="app-bg" aria-hidden="true"></div>
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true"></span>
+      <span class="brand__name">Nocturne</span>
+    </div>
+
+    <!-- Mobile-only trigger for the slide-up queue sheet (hidden on desktop
+         where the queue panel is permanently docked — see styles.css). -->
+    <button type="button" class="queue-toggle" id="queueToggle" aria-expanded="false" aria-controls="queuePanel">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+        <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      <span>Queue</span>
+      <span class="queue-toggle__count" id="queueCount"></span>
+    </button>
+  </header>
+
+  <main class="dashboard">
+    <section class="player-panel glass" aria-label="Now playing">
+
+      <div class="vinyl-stage">
+        <div class="vinyl" id="vinyl">
+          <img class="vinyl__art" id="coverArt" src="" alt="" />
+          <div class="vinyl__hole" aria-hidden="true"></div>
+        </div>
+        <div class="eq" id="eq" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="track-meta">
+        <h1 class="track-meta__title" id="trackTitle">—</h1>
+        <p class="track-meta__artist" id="trackArtist">—</p>
+      </div>
+      <div class="progress">
+        <span class="progress__time" id="currentTime" aria-hidden="true">0:00</span>
+        <input
+          type="range"
+          class="progress__slider"
+          id="progressSlider"
+          min="0" max="100" step="0.1" value="0"
+          aria-label="Seek within track"
+        />
+        <span class="progress__time" id="remainingTime" aria-hidden="true">-0:00</span>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="control-btn control-btn--secondary" id="shuffleBtn" aria-pressed="false" aria-label="Toggle shuffle">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M3 6h3.5L15 18h5.5M16 6h4v4M3 18h3.5L11 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </button>
+
+        <button type="button" class="control-btn" id="prevBtn" aria-label="Previous track">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M19 5v14L8 12l11-7z" fill="currentColor"/><rect x="5" y="5" width="2.5" height="14" fill="currentColor"/></svg>
+        </button>
+
+        <button type="button" class="control-btn control-btn--play" id="playBtn" aria-label="Play">
+          <svg id="playIcon" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false"><path d="M8 5v14l12-7z" fill="currentColor"/></svg>
+          <svg id="pauseIcon" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false" hidden><rect x="6" y="5" width="4.5" height="14" fill="currentColor"/><rect x="13.5" y="5" width="4.5" height="14" fill="currentColor"/></svg>
+        </button>
+
+        <button type="button" class="control-btn" id="nextBtn" aria-label="Next track">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 5v14l11-7L5 5z" fill="currentColor"/><rect x="16.5" y="5" width="2.5" height="14" fill="currentColor"/></svg>
+        </button>
+
+        <button type="button" class="control-btn control-btn--secondary" id="repeatBtn" aria-pressed="false" aria-label="Toggle repeat">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M4 7h13a3 3 0 0 1 3 3v2M20 17H7a3 3 0 0 1-3-3v-2M8 4 4 7l4 3M16 20l4-3-4-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </button>
+      </div>
+
+      <div class="volume">
+        <button type="button" class="control-btn control-btn--ghost" id="muteBtn" aria-label="Mute">
+          <svg id="volIconHigh" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M19 6a9 9 0 0 1 0 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+          <svg id="volIconMuted" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" hidden><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <input
+          type="range"
+          class="volume__slider"
+          id="volumeSlider"
+          min="0" max="1" step="0.01" value="0.75"
+          aria-label="Volume"
+        />
+      </div>
+
+      <audio id="audioEl" preload="metadata"></audio>
+    </section>
+    <section class="queue-panel glass" id="queuePanel" aria-label="Up next">
+      <div class="queue-panel__header">
+        <h2>Up next</h2>
+        <button type="button" class="queue-panel__close" id="queueClose" aria-label="Close queue">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <ul class="queue-list" id="queueList" role="list"></ul>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

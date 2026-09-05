@@ -1,0 +1,237 @@
+/* ==========================================================================
+   DESIGN TOKENS
+   ========================================================================== */
+:root {
+  /* Palette — charcoal neumorphic base. Buttons are cut from the SAME
+     background color as the page, so their form reads purely through
+     dual light/dark shadows (the defining trait of neumorphism) rather
+     than borders or flat fills. */
+  --color-bg: #1b1c20;
+  --color-surface: #1f2024;
+  --shadow-light: rgba(255, 255, 255, 0.045);
+  --shadow-dark: rgba(0, 0, 0, 0.55);
+
+  --color-text: #f4f4f6;
+  --color-text-dim: #77798a;
+
+  /* Function keys (C, +/-, backspace) vs. operators vs. digits get three
+     distinct colors — a direct, explicit answer to "color-code operators
+     vs number keys" rather than one accent doing double duty. */
+  --color-number: #2a2b30;
+  --color-function: #35373d;
+  --color-function-text: #d7d9e4;
+  --color-operator: #ff9f0a;
+  --color-operator-active: #ffb545;
+  --color-equals: #ff9f0a;
+
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+
+  --ease-tap: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 110ms;
+  --duration-base: 220ms;
+
+  --radius-key: 20px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space, 24px);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-operator);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   CALCULATOR SHELL
+   A raised neumorphic panel: the same background as the page, distinguished
+   only by a soft outward dual-shadow, echoing the key styling so the whole
+   unit feels machined from one material.
+   ========================================================================== */
+.calculator {
+  width: min(380px, 92vw);
+  padding: 28px;
+  border-radius: 32px;
+  background: var(--color-surface);
+  box-shadow:
+    -10px -10px 24px var(--shadow-light),
+    14px 14px 32px var(--shadow-dark);
+}
+
+/* ==========================================================================
+   DISPLAY
+   Inset (pressed-in) neumorphic panel — the visual inverse of the raised
+   keys, so the screen reads as "recessed glass" against a "solid" body.
+   ========================================================================== */
+.display {
+  padding: 22px 20px 18px;
+  margin-bottom: 22px;
+  border-radius: 20px;
+  background: var(--color-bg);
+  box-shadow:
+    inset 4px 4px 10px var(--shadow-dark),
+    inset -4px -4px 10px var(--shadow-light);
+  text-align: right;
+  overflow: hidden;
+}
+
+.display__expression {
+  min-height: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-dim);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.display__value {
+  display: block;
+  margin-top: 6px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  /* Base size; JS toggles the data-length-driven modifier classes below
+     to keep long results inside the display without ever wrapping. */
+  font-size: 2.75rem;
+  transition: font-size var(--duration-fast) var(--ease-tap);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Overflow protection: script.js measures the string length and applies
+   one of these size steps — a fluid `clamp()` alone can't react to
+   *content length* (only viewport width), so length-driven steps are the
+   correct tool here. */
+.display__value[data-length-tier="md"] { font-size: 2.15rem; }
+.display__value[data-length-tier="lg"] { font-size: 1.65rem; }
+.display__value[data-length-tier="xl"] { font-size: 1.25rem; }
+
+/* ==========================================================================
+   KEYPAD GRID
+   A strict 4-column grid. The zero key spans two columns (classic
+   calculator convention) using grid-column, not extra markup or flex hacks.
+   ========================================================================== */
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.key {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-key);
+  background: var(--color-number);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 1.4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    -6px -6px 14px var(--shadow-light),
+    8px 8px 18px var(--shadow-dark);
+  transition: transform var(--duration-fast) var(--ease-tap),
+              box-shadow var(--duration-fast) var(--ease-tap),
+              background var(--duration-fast) var(--ease-tap);
+}
+
+.key--zero {
+  grid-column: span 2;
+  aspect-ratio: auto;
+  justify-content: flex-start;
+  padding-left: 28px;
+}
+
+.key--function {
+  background: var(--color-function);
+  color: var(--color-function-text);
+  font-size: 1.15rem;
+}
+
+.key--operator {
+  background: var(--color-surface);
+  color: var(--color-operator);
+  font-size: 1.6rem;
+}
+
+.key--equals {
+  background: var(--color-equals);
+  color: #1b1c20;
+  font-size: 1.6rem;
+}
+
+/* Hover: a gentle lift, consistent across all key types via one rule. */
+@media (hover: hover) {
+  .key:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      -7px -7px 16px var(--shadow-light),
+      10px 10px 22px var(--shadow-dark);
+  }
+  .key--equals:hover { background: var(--color-operator-active); }
+}
+
+/* Pressed / active state — inset shadow flips the key from "raised" to
+   "pushed in", the core neumorphic click affordance. `.is-active` is the
+   same class script.js applies for physical keyboard presses, so mouse
+   clicks and key presses produce an identical visual response. */
+.key:active,
+.key.is-active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow:
+    inset 3px 3px 8px var(--shadow-dark),
+    inset -3px -3px 8px var(--shadow-light);
+}
+
+.key--operator.is-active,
+.key--equals.is-active {
+  background: var(--color-operator-active);
+  color: #1b1c20;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   The grid itself already scales via the fluid `min(380px, 92vw)` shell
+   width — these breakpoints just tune spacing/type at the extremes.
+   ========================================================================== */
+@media (max-width: 380px) {
+  .calculator { padding: 20px; border-radius: 26px; }
+  .keypad { gap: 10px; }
+  .key { border-radius: 16px; font-size: 1.2rem; }
+  .display__value { font-size: 2.25rem; }
+}
+
+@media (min-width: 700px) {
+  .calculator { width: 400px; padding: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.001ms !important;
+  }
+}
