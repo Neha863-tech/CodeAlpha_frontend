@@ -1,11 +1,6 @@
-/* ==========================================================================
-   DESIGN TOKENS
-   ========================================================================== */
+
 :root {
-  /* Palette — charcoal neumorphic base. Buttons are cut from the SAME
-     background color as the page, so their form reads purely through
-     dual light/dark shadows (the defining trait of neumorphism) rather
-     than borders or flat fills. */
+
   --color-bg: #1b1c20;
   --color-surface: #1f2024;
   --shadow-light: rgba(255, 255, 255, 0.045);
@@ -13,10 +8,6 @@
 
   --color-text: #f4f4f6;
   --color-text-dim: #77798a;
-
-  /* Function keys (C, +/-, backspace) vs. operators vs. digits get three
-     distinct colors — a direct, explicit answer to "color-code operators
-     vs number keys" rather than one accent doing double duty. */
   --color-number: #2a2b30;
   --color-function: #35373d;
   --color-function-text: #d7d9e4;
@@ -60,12 +51,6 @@ body {
   border-radius: 8px;
 }
 
-/* ==========================================================================
-   CALCULATOR SHELL
-   A raised neumorphic panel: the same background as the page, distinguished
-   only by a soft outward dual-shadow, echoing the key styling so the whole
-   unit feels machined from one material.
-   ========================================================================== */
 .calculator {
   width: min(380px, 92vw);
   padding: 28px;
@@ -76,11 +61,6 @@ body {
     14px 14px 32px var(--shadow-dark);
 }
 
-/* ==========================================================================
-   DISPLAY
-   Inset (pressed-in) neumorphic panel — the visual inverse of the raised
-   keys, so the screen reads as "recessed glass" against a "solid" body.
-   ========================================================================== */
 .display {
   padding: 22px 20px 18px;
   margin-bottom: 22px;
@@ -112,26 +92,15 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: clip;
-  /* Base size; JS toggles the data-length-driven modifier classes below
-     to keep long results inside the display without ever wrapping. */
   font-size: 2.75rem;
   transition: font-size var(--duration-fast) var(--ease-tap);
   font-variant-numeric: tabular-nums;
 }
 
-/* Overflow protection: script.js measures the string length and applies
-   one of these size steps — a fluid `clamp()` alone can't react to
-   *content length* (only viewport width), so length-driven steps are the
-   correct tool here. */
 .display__value[data-length-tier="md"] { font-size: 2.15rem; }
 .display__value[data-length-tier="lg"] { font-size: 1.65rem; }
 .display__value[data-length-tier="xl"] { font-size: 1.25rem; }
 
-/* ==========================================================================
-   KEYPAD GRID
-   A strict 4-column grid. The zero key spans two columns (classic
-   calculator convention) using grid-column, not extra markup or flex hacks.
-   ========================================================================== */
 .keypad {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -185,7 +154,6 @@ body {
   font-size: 1.6rem;
 }
 
-/* Hover: a gentle lift, consistent across all key types via one rule. */
 @media (hover: hover) {
   .key:hover {
     transform: translateY(-2px);
@@ -196,10 +164,6 @@ body {
   .key--equals:hover { background: var(--color-operator-active); }
 }
 
-/* Pressed / active state — inset shadow flips the key from "raised" to
-   "pushed in", the core neumorphic click affordance. `.is-active` is the
-   same class script.js applies for physical keyboard presses, so mouse
-   clicks and key presses produce an identical visual response. */
 .key:active,
 .key.is-active {
   transform: translateY(1px) scale(0.97);
@@ -214,11 +178,6 @@ body {
   color: #1b1c20;
 }
 
-/* ==========================================================================
-   RESPONSIVE
-   The grid itself already scales via the fluid `min(380px, 92vw)` shell
-   width — these breakpoints just tune spacing/type at the extremes.
-   ========================================================================== */
 @media (max-width: 380px) {
   .calculator { padding: 20px; border-radius: 26px; }
   .keypad { gap: 10px; }
